@@ -12,8 +12,8 @@ import time
 load_dotenv(override=True)
 
 os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
-llm_model = ChatGroq(model="llama-3.1-8b-instant")
-
+llm_model = ChatGroq(model="llama-3.3-70b-versatile", streaming=True)
+print(f"Using model: {llm_model.model_name}")
 class ChatState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
@@ -31,4 +31,5 @@ graph.add_node("chat_node", chat_node)
 graph.add_edge(START, "chat_node")
 graph.add_edge("chat_node", END)
 
-chatbot =graph.compile(checkpointer=checkpointer)
+chatbot = graph.compile(checkpointer=checkpointer)
+

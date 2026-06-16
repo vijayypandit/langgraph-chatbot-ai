@@ -1,171 +1,292 @@
 import streamlit as st
 
+
 def setup_page_config():
     """Configure Streamlit page settings"""
     st.set_page_config(
-        page_title="🤖 LangGraph ChatBot",
+        page_title=" LangGraph ChatBot 🤖",
         page_icon="🤖",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
+    if 'message_history' not in st.session_state:
+        st.session_state['message_history'] = []
+
+
 def setup_custom_css():
     """Apply custom CSS styling"""
-    # Always use dark theme
     bg = '#0b1220'
-    panel = '#0f1724'
-    text = '#e6eef8'
-    subtext = '#a8b3c7'
-    assistant_bg = '#14222b'
+    surface = '#111827'
+    panel = '#161f2e'
+    text = '#f8fafc'
+    subtext = '#94a3b8'
+    accent = '#7c3aed'
+    muted = '#64748b'
+    shadow = 'rgba(15, 23, 42, 0.35)'
 
     st.markdown(f"""
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
         :root {{
-            --app-bg: {bg};
-            --panel-bg: {panel};
-            --text-color: {text};
-            --subtext-color: {subtext};
+            --page-bg: {bg};
+            --surface: {surface};
+            --panel: {panel};
+            --text: {text};
+            --subtext: {subtext};
+            --accent: {accent};
+            --muted: {muted};
+            --shadow: 0 24px 60px {shadow};
+            font-family: 'Jakarta Sans', 'Inter', system-ui, sans-serif;
         }}
+
+        .css-1d391kg {{
+            background: var(--page-bg) !important;
+        }}
+
+        .stApp {{
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), transparent 28%),
+                        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.16), transparent 22%),
+                        var(--page-bg);
+            color: var(--text);
+            font-family: 'Jakarta Sans', 'Inter', system-ui, sans-serif;
+        }}
+
         .main-header {{
-            text-align: left;
-            color: var(--text-color);
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin: 0 0 0.25rem 0;
-            display:flex;
-            align-items:center;
-            gap:12px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0 0.5rem;
         }}
+
         .app-logo {{
-            width:42px;
-            height:42px;
-            border-radius:8px;
-            background: linear-gradient(135deg,#ff7f0e 0%, #ffb380 100%);
-            display:inline-block;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(124,58,237,1), rgba(59,130,246,1));
             color: white;
-            font-weight:700;
-            text-align:center;
-            line-height:42px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            box-shadow: 0 18px 40px rgba(59, 130, 246, 0.18);
         }}
-        .subtitle {{
-            color: var(--subtext-color);
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
+
+        .hero-title {{
+            margin: 0;
+            color: var(--text);
+            font-size: 2.6rem;
+            line-height: 1.05;
+            font-weight: 800;
         }}
-        .card {{
-            background: var(--panel-bg);
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 6px 18px rgba(11,34,64,0.04);
-            margin-bottom: 12px;
+
+        .hero-subtitle {{
+            margin-top: 0.55rem;
+            color: var(--subtext);
+            font-size: 1rem;
+            max-width: 680px;
         }}
+
+        .chat-shell {{
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 28px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.12);
+            backdrop-filter: blur(18px);
+        }}
+
+        .chat-window {{
+            min-height: 520px;
+            max-height: 72vh;
+            overflow-y: auto;
+            padding-right: 12px;
+        }}
+
+        .sidebar-textarea textarea {{
+            min-height: 80px !important;
+            border-radius: 16px !important;
+            padding: 1rem !important;
+            background: rgba(255,255,255,0.05) !important;
+            color: var(--text) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+        }}
+
         .chat-space {{
             margin-bottom: 1rem;
         }}
-        .user-message {{
-            background-color: #ff7f0e;
-            color: white;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            text-align: left;
-            margin-left: 20%;
+
+        .assistant-message, .user-message {{
+            display: inline-block;
+            border-radius: 24px;
+            padding: 16px 18px;
+            line-height: 1.6;
+            font-size: 1rem;
+            max-width: 78%;
+            box-shadow: 0 16px 30px rgba(0,0,0,0.08);
+            position: relative;
+            word-break: break-word;
         }}
+
         .assistant-message {{
-            background-color: {assistant_bg};
-            color: var(--text-color);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            text-align: left;
-            margin-right: 20%;
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(31, 41, 55, 0.95));
+            color: var(--text);
+            margin-bottom: 1rem;
         }}
-        .message-count {{
-            text-align: center;
-            color: var(--subtext-color);
-            font-size: 0.85em;
-            margin-top: 1rem;
+
+        .assistant-message::before {{
+            content: '🤖';
+            position: absolute;
+            left: -32px;
+            top: 16px;
+            font-size: 1.1rem;
         }}
-        /* style the input area */
-        .stButton>button{{
-            background: linear-gradient(90deg,#ff7f0e,#ffb380);
+
+        .user-message {{
+            background: linear-gradient(180deg, rgba(79, 70, 229, 0.95), rgba(96, 165, 250, 0.95));
             color: white;
-            border: none;
+            margin-left: auto;
+            margin-bottom: 1rem;
+        }}
+
+        .user-message::after {{
+            content: '👤';
+            position: absolute;
+            right: -32px;
+            top: 16px;
+            font-size: 1.1rem;
+        }}
+
+        .status-strip {{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin: 1rem 0 1.5rem;
+        }}
+
+        .status-card {{
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 1rem 1.2rem;
+            box-shadow: 0 18px 36px rgba(0,0,0,0.08);
+        }}
+
+        .status-title {{
+            margin: 0 0 0.4rem;
+            font-size: 0.9rem;
+            color: var(--subtext);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }}
+
+        .status-value {{
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text);
+        }}
+
+        .input-panel {{
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 18px 32px rgba(0,0,0,0.08);
+        }}
+
+        .stTextInput>div>div>input, .stTextArea>div>div>textarea {{
+            border-radius: 18px !important;
+            border: 1px solid rgba(148, 163, 184, 0.24) !important;
+            padding: 1rem 1.1rem !important;
+            min-height: 58px;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.06) !important;
+            color: var(--text) !important;
+        }}
+
+        .stButton>button {{
+            background: linear-gradient(90deg, var(--accent), #4f46e5) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 999px !important;
+            padding: 0.95rem 1.6rem !important;
+            font-weight: 700 !important;
+            box-shadow: 0 16px 30px rgba(79, 70, 229, 0.2) !important;
+        }}
+
+        .stButton>button:hover {{
+            opacity: 0.96 !important;
+            transform: translateY(-1px);
+        }}
+
+        .footer-note {{
+            text-align: center;
+            color: var(--subtext);
+            margin: 1.5rem 0 0;
+            font-size: 0.9rem;
+        }}
+
+        .streamlit-expanderHeader {{
+            font-weight: 700 !important;
         }}
     </style>
     """, unsafe_allow_html=True)
 
+
 def render_header():
     """Render main header"""
-    # logo (simple gradient box with initials) and title
     st.markdown(
-        '<div class="main-header"><span class="app-logo">LG</span><div style="display:inline-block"><div>LangGraph ChatBot</div><div class="subtitle">Conversational assistant powered by LangChain & Groq</div></div></div>',
+        '<div class="main-header"><span class="app-logo">AI</span><div><h1 class="hero-title">🤖 LangGraph ChatBot 🤖</h1></div></div>',
         unsafe_allow_html=True
     )
+
 
 def render_sidebar():
     """Render sidebar with settings and stats"""
     with st.sidebar:
-        st.markdown("### 🎯 Chat Settings")
+        st.markdown("🛠️ Settings 🛠️")
         st.markdown("---")
 
-        # Small app card
-        st.markdown('<div class="card"><strong>LangGraph</strong><br/><small>Smart chat assistant</small></div>', unsafe_allow_html=True)
-
-        # Model selector (informational)
-        st.markdown("**Model**")
-        model = st.selectbox("", ["Llama 3.1 8B (Groq)"], index=0, help="Model used for responses (info only)")
-
-        # Thread id
-        thread_id = st.text_input("Thread ID", value=st.session_state.get('thread_id','thread-1'))
-        st.session_state['thread_id'] = thread_id
+        st.markdown('### Conversation ❤️📚')
+        st.markdown('<div class="status-card"><p class="status-title">Messages 🚀 </p><p class="status-value">{}</p></div>'.format(len(st.session_state['message_history'])), unsafe_allow_html=True)
+        st.markdown('<div class="status-card"><p class="status-title">User messages 📨</p><p class="status-value">{}</p></div>'.format(sum(1 for m in st.session_state['message_history'] if m['role'] == 'user')), unsafe_allow_html=True)
+        st.markdown('<div class="status-card"><p class="status-title">Assistant replies 🤖</p><p class="status-value">{}</p></div>'.format(sum(1 for m in st.session_state['message_history'] if m['role'] == 'assistant')), unsafe_allow_html=True)
 
         st.markdown("---")
-        st.markdown("**Theme**")
-        st.write("Dark mode only")
-        st.markdown("---")
-
-        # Statistics
-        st.markdown(f"### 📊 Statistics")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Total", len(st.session_state['message_history']))
-        with col2:
-            user_count = sum(1 for m in st.session_state['message_history'] if m['role'] == 'user')
-            st.metric("You", user_count)
-
-        st.markdown("---")
-
-        # Actions
-        if st.button("🗑️ Clear Chat History", use_container_width=True):
+        if st.button("Clear chat history", use_container_width=True):
             st.session_state['message_history'] = []
-            st.success("Chat history cleared!")
+            st.session_state.thread_id = str(uuid.uuid4())
+            st.success("Chat history cleared")
             st.rerun()
 
-        if st.button("⬆️ Export Chat", use_container_width=True):
-            st.info("Export feature coming soon")
+        if st.button("Export conversation", use_container_width=True):
+            st.info("Export is not implemented yet")
 
         st.markdown("---")
+        st.markdown("### About")
+        st.caption("A modern desktop chat UI using Streamlit and LangGraph. Improve, iterate, and refine the visual experience.")
 
-        # About / Credits
-        st.markdown("### ℹ️ About")
-        st.caption("This demo uses LangGraph to orchestrate LLM calls.\nDesigned for desktop use.")
 
 def render_chat_display():
     """Render chat message display"""
-    # Render messages directly on the main page (no outer container)
-    if len(st.session_state['message_history']) == 0:
-        st.info("👋 Start a conversation by typing a message below!")
-    else:
+    if len(st.session_state['message_history']) > 0:
         for message in st.session_state['message_history']:
             if message['role'] == 'user':
-                st.markdown(f'<div class="chat-space user-message">👤 You: {message["content"]}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="chat-space user-message"><strong>User :</strong> {message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
             else:
-                st.markdown(f'<div class="chat-space assistant-message">🤖 AI Assistant: {message["content"]}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="chat-space assistant-message"><strong>AI Assistant:</strong> {message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
+
 
 def render_footer():
     """Render footer with message count"""
-    st.markdown("---")
-    st.markdown('<div class="message-count">💬 Messages in this session: {}</div>'.format(len(st.session_state['message_history'])), unsafe_allow_html=True)
-    st.markdown('<div style="text-align: center; color: #999; font-size: 0.8em; margin-top: 1rem;">Built with Streamlit, LangChain & LangGraph</div>', unsafe_allow_html=True)
+    st.markdown('<div class="footer-note">Built with Streamlit, LangChain, and LangGraph · Designed for clean desktop chat workflows.</div>', unsafe_allow_html=True)

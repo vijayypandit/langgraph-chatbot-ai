@@ -3,6 +3,8 @@ from langgraph_backend import chatbot
 from langchain_core.messages import HumanMessage
 import importlib
 import ui_config as ui
+import uuid
+
 
 # reload UI module so edits appear during Streamlit reloads
 importlib.reload(ui)
@@ -11,6 +13,7 @@ importlib.reload(ui)
 ui.setup_page_config()
 ui.setup_custom_css()
 
+# Create a unique thread id per user session
 CONFIG = {'configurable': {'thread_id': st.session_state.get('thread_id', 'thread-1')}}
 
 # Render sidebar
@@ -27,18 +30,19 @@ user_input = st.chat_input("Ask Anything ...", key='user_input')
 
 if user_input:
     st.session_state['message_history'].append({'role': 'user', 'content': user_input.strip()})
-    try:
-        with st.spinner('🤖 Generating response...'):
-            response = chatbot.invoke(
-                {'messages': [HumanMessage(content=user_input.strip())]},
-                config=CONFIG
+    # with st.chat_message('User : '):
+    st.write(user_input)
+    # with st.spinner('🤖 Generating Response...'):
+    with st.chat_message('Assistant : '):
+        ai_message = st.write_stream(
+            message_chunk.content for message_chunk , metadata in chatbot.stream(
+                {'messages': [HumanMessage(content=user_input)]}, 
+                config=CONFIG,
+                stream_mode='messages'
             )
-            ai_message = response['messages'][-1].content
-            st.session_state['message_history'].append({'role': 'assistant', 'content': ai_message})
-
-        st.rerun()
-    except Exception as e:
-        st.error(f"❌ Error generating response: {str(e)}")
-
+        )
+    st.session_state['message_history'].append({'role': 'assistant', 'content': ai_message})
+    st.rerun()
+    
 ui.render_footer()
 
