@@ -1,3 +1,8 @@
+---
+name: frontend-design
+description: Design principles and Streamlit UI starter template guidelines for creating polished visual interfaces in the chatbot app.
+---
+
 # Frontend Design Skill — Langgraph Chatbot
 
 Purpose
