@@ -35,11 +35,11 @@ flowchart LR
 
 ### 2️⃣ LangGraph State Machine (Backend Graph)
 
-This diagram illustrates the internal state graph definition — a simple but powerful single-node graph with checkpointed persistence:
+This diagram illustrates the internal graph execution. A single node (`chat_node`) runs, while persistence is handled transparently by the **SQLite checkpointer**:
 
 ```mermaid
 flowchart TD
-  START["🟢 START"] -->|"Incoming HumanMessage + thread_id config"| ChatNode["🧠 chat_node"]
+  START["🟢 START"] -->|"Incoming HumanMessage + configurable.thread_id"| ChatNode["🧠 chat_node"]
   ChatNode -->|"1. Load historical messages from SQLite checkpoint\n2. Call Groq LLM to generate response\n3. Append AIMessage to state"| CP[("💾 SqliteSaver Checkpoint")]
   CP -->|"Persist updated state to chatbot.db"| END_NODE["🔴 END"]
 ```
