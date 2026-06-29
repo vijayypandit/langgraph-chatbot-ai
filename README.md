@@ -17,20 +17,20 @@
 
 ## 🏗️ Architecture & Flow Diagrams
 
-### 1️⃣ System Interaction Flow (Database-Backed)
+### 1️⃣ System Interaction Flow (Recommended v3: Database + Streaming)
 
-This diagram shows how the user, Streamlit frontend, LangGraph backend, and Groq LLM communicate, with SQLite checkpointing at the center:
+This diagram shows the runtime wiring between the **UI** (`streamlit_frontend_database.py`) and the **SQLite-backed LangGraph backend** (`langgraph_database_backend.py`). Conversation state is checkpointed to **`chatbot.db`**:
 
 ```mermaid
 flowchart LR
-  U["👤 User"] -->|Sends Chat Input| UI["🖥️ Streamlit Frontend"]
-  UI -->|chatbot.stream with thread config| BG["🧠 LangGraph Database Backend"]
+  U["👤 User"] -->|Sends Chat Input| UI["🖥️ streamlit_frontend_database.py\n(threads + st.write_stream)"]
+  UI -->|chatbot.stream(configurable.thread_id)| BG["🧠 langgraph_database_backend.py\n(SqliteSaver checkpointer)"]
   BG -->|LLM API Request| LLM["⚡ Groq Llama 3.3 70B"]
   LLM -->|Token Stream Response| BG
-  BG -->|Renders streamed tokens| UI
+  BG -->|Streams message chunks| UI
   UI -->|Displays to User| U
 
-  BG <-.->|"Saves & Loads Thread State"| CP[("💾 chatbot.db SQLite")]
+  BG <-.->|"Saves & Loads Thread State"| CP[("💾 chatbot.db (SQLite)")]
 ```
 
 ### 2️⃣ LangGraph State Machine (Backend Graph)

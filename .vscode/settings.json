@@ -3,5 +3,6 @@
     "*.db": "default",
     "*.sqlite": "sqliteDbViewer.dbViewer",
     "*.sqlite3": "sqliteDbViewer.dbViewer"
-  }
+  },
+  "postman.settings.dotenv-detection-notification-visibility": false
 }
