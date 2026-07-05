@@ -15,6 +15,18 @@
 
 ---
 
+## 🛠️ Tool Calling Support
+
+The chatbot can use external tools during a conversation through LangGraph's tool-calling flow. In [langgraph_tool_backend.py](langgraph_tool_backend.py), three tools are registered and available to the LLM:
+
+- `search_tool` — Performs a web search using DuckDuckGo to help answer up-to-date questions.
+- `calculator` — Executes arithmetic operations on two numbers, including addition, subtraction, multiplication, and division. It also understands symbols like `+`, `-`, `*`, and `/`.
+- `get_stock_price` — Fetches stock price information for a given ticker symbol such as `AAPL` or `TSLA`.
+
+When a user asks for something that needs specialized functionality, the model can decide to invoke one of these tools and use the result in its response.
+
+---
+
 ## 🏗️ Architecture & Flow Diagrams
 
 ### 1️⃣ System Interaction Flow (Recommended v3: Database + Streaming)

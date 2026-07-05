@@ -1,10 +1,7 @@
 import streamlit as st
-from langgraph_database_backend import chatbot, retrieve_all_threads
-from langchain_core.messages import HumanMessage
+from langgraph_tool_backend import chatbot, retrieve_all_threads
+from langchain_core.messages import HumanMessage, AIMessage
 import uuid
-from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.tools import tool
 
 # ==============================================================================
 # Utility & Helper Functions
@@ -102,13 +99,16 @@ if user_input:
     
     # Stream the response chunks from the chatbot and write them in real-time
     with st.chat_message('Assistant : '):
-        ai_message = st.write_stream(
-            message_chunk.content for message_chunk, metadata in chatbot.stream(
+        def ai_only_stream():
+            for message_chunk, metadata in chatbot.stream(
                 {'messages': [HumanMessage(content=user_input)]}, 
                 config=CONFIG,
                 stream_mode='messages'
-            )
-        )
+            ):
+                if isinstance(message_chunk, AIMessage):
+                    yield message_chunk.content
+
+        ai_message = st.write_stream(ai_only_stream())  
     
     # Save the assistant response in history for display persistence
     st.session_state['message_history'].append({'role': 'assistant', 'content': ai_message})
