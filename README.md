@@ -17,6 +17,191 @@
 
 ## 🛠️ Tool Calling Support
 
+The chatbot supports external tools through LangGraph's tool-calling flow. The available tools vary depending on which backend is used.
+
+### 📦 Standard Tools (Available in Most Backends)
+
+These tools are available in [langgraph_tool_backend.py](langgraph_tool_backend.py) and [langgraph_database_backend.py](langgraph_database_backend.py):
+
+- **`search_tool`** (DuckDuckGo Search) — Performs a web search to help answer up-to-date questions. Powered by the `DuckDuckGoSearchRun` community tool.
+- **`calculator`** — Executes arithmetic operations on two numbers. Supports:
+  - Addition: `'add'`, `'+'`, `'plus'`
+  - Subtraction: `'subtract'`, `'-'`, `'minus'`
+  - Multiplication: `'multiply'`, `'*'`, `'times'`
+  - Division: `'divide'`, `'/'`
+- **`get_stock_price`** — Fetches real-time stock price information for a given ticker symbol (e.g., `AAPL`, `TSLA`) using the Alpha Vantage financial API.
+
+### 🌐 MCP Integration & MCP Tools
+
+#### What is MCP?
+
+**MCP** (Model Context Protocol) is an open protocol for securely connecting language models to external tools and resources. The chatbot uses the `langchain_mcp_adapters.client.MultiServerMCPClient` to connect to multiple MCP servers and expose their tools to the LLM.
+
+#### MCP-Enabled Backend: [langgraph_mcp_backend.py](langgraph_mcp_backend.py)
+
+This backend integrates **MCP tools** from external servers, available through:
+
+```python
+client = MultiServerMCPClient({
+    "arith": {
+        "transport": "stdio",
+        "command": "python3",
+        "args": ["/Users/nitish/Desktop/mcp-math-server/main.py"],
+    },
+    "expense": {
+        "transport": "streamable_http",
+        "url": "https://splendid-gold-dingo.fastmcp.app/mcp"
+    }
+})
+```
+
+**MCP Servers in Use:**
+
+1. **`arith` MCP Server** (Local - Stdio Transport)
+   - 📍 **Transport**: Stdio (command-line based)
+   - 🔧 **Tools**: Math/arithmetic operations via a local MCP server
+   - ⚙️ **Configuration**: Runs Python script at `/Users/nitish/Desktop/mcp-math-server/main.py`
+   - 💡 **Use Case**: Advanced mathematical computations beyond basic calculator
+
+2. **`expense` MCP Server** (Remote - HTTP Transport)
+   - 📍 **Transport**: Streamable HTTP (FastMCP)
+   - 🔧 **Tools**: Expense tracking and financial management
+   - 🌐 **Endpoint**: `https://splendid-gold-dingo.fastmcp.app/mcp`
+   - 💡 **Use Case**: Expense tracking, budgeting, and financial queries
+
+#### How MCP Tools Are Loaded
+
+```python
+def load_mcp_tools() -> list[BaseTool]:
+    """Load all tools from configured MCP servers."""
+    try:
+        return run_async(client.get_tools())
+    except Exception:
+        return []  # Gracefully fallback if MCP unavailable
+
+mcp_tools = load_mcp_tools()
+tools = [search_tool, get_stock_price, *mcp_tools]
+llm_with_tools = llm.bind_tools(tools) if tools else llm
+```
+
+#### MCP Frontend: [streamlit_frontend_mcp.py](streamlit_frontend_mcp.py)
+
+The MCP-enabled frontend supports:
+- ⚡ **Async execution** — Non-blocking MCP tool calls
+- 🔄 **Real-time streaming** — Token streaming from LLM and MCP tools
+- 💾 **Async SQLite persistence** — Uses `AsyncSqliteSaver` for async checkpointing
+- 🧵 **Multi-thread support** — Thread-safe async operations
+
+**Key Features:**
+```python
+from langgraph_mcp_backend import chatbot, retrieve_all_threads, submit_async_task
+
+# Submit async MCP tasks
+result = submit_async_task(mcp_coroutine)
+
+# Enable streaming with MCP tools
+response = await chatbot.ainvoke(
+    {'messages': [HumanMessage(content=user_input)]},
+    config=CONFIG
+)
+```
+
+### 📊 Complete Tool Matrix
+
+| Tool | Backend | Transport | Capability | Status |
+|---|---|---|---|---|
+| **search_tool** (DuckDuckGo) | Tool, Database, MCP | LangChain Community | Web search | ✅ Ready |
+| **calculator** | Tool, Database | Python function | Arithmetic | ✅ Ready |
+| **get_stock_price** | Tool, Database, MCP | Alpha Vantage API | Stock prices | ✅ Ready |
+| **MCP: arith** | MCP only | Stdio | Advanced math | ✅ MCP-Enabled |
+| **MCP: expense** | MCP only | HTTP/FastMCP | Expense tracking | ✅ MCP-Enabled |
+
+---
+
+## 🔀 Choosing the Right Frontend-Backend Combination
+
+### ⭐ Recommended: Database + Streaming (v3)
+
+**Command:**
+```bash
+streamlit run streamlit_frontend_database.py
+```
+
+**Best For:**
+- Production deployments
+- Persisting conversations
+- Multi-user scenarios
+- Need for thread recovery after restarts
+
+**Includes:**
+- ✅ SQLite persistence (`chatbot.db`)
+- ✅ Real-time token streaming
+- ✅ Multi-thread conversation switcher
+- ✅ All standard tools (search, calculator, stock price)
+
+---
+
+### 🌐 Advanced: MCP Integration + Async
+
+**Command:**
+```bash
+streamlit run streamlit_frontend_mcp.py
+```
+
+**Best For:**
+- Extending chatbot with external tools (MCP servers)
+- Advanced use cases requiring math servers or expense tracking
+- Async/non-blocking tool execution
+- Experimenting with Model Context Protocol
+
+**Includes:**
+- ✅ Async SQLite persistence
+- ✅ MCP server integration (arith + expense)
+- ✅ Real-time streaming
+- ✅ All standard tools + MCP tools
+- ⚙️ Requires MCP servers to be running
+
+---
+
+### 📦 Alternative: In-Memory Streaming (v2)
+
+**Command:**
+```bash
+streamlit run streamlit_frontend_streaming.py
+```
+
+**Best For:**
+- Testing and development
+- Temporary conversations (no storage needed)
+- Lower resource requirements
+
+**Includes:**
+- ✅ Real-time token streaming
+- ❌ No persistence (memory-only)
+- ✅ All standard tools
+
+---
+
+### 📝 Legacy: In-Memory Static (v1)
+
+**Command:**
+```bash
+streamlit run streamlit_frontend.py
+```
+
+**Best For:**
+- Understanding the basics
+- Minimal UI
+
+**Includes:**
+- ❌ No streaming
+- ❌ No persistence
+- ❌ No tools
+
+---
+
+## 🛠️ Tool Calling Support
+
 The chatbot can use external tools during a conversation through LangGraph's tool-calling flow. In [langgraph_tool_backend.py](langgraph_tool_backend.py), three tools are registered and available to the LLM:
 
 - `search_tool` — Performs a web search using DuckDuckGo to help answer up-to-date questions.
@@ -24,8 +209,6 @@ The chatbot can use external tools during a conversation through LangGraph's too
 - `get_stock_price` — Fetches stock price information for a given ticker symbol such as `AAPL` or `TSLA`.
 
 When a user asks for something that needs specialized functionality, the model can decide to invoke one of these tools and use the result in its response.
-
----
 
 ## 🏗️ Architecture & Flow Diagrams
 
@@ -255,7 +438,9 @@ with st.chat_message('Assistant : '):
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure & Frontend-Backend Mappings
+
+### 📋 Complete File Reference
 
 | 📄 File | 📝 Description |
 |---|---|
@@ -264,17 +449,33 @@ with st.chat_message('Assistant : '):
 | [langgraph_backend.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/langgraph_backend.py) 🧠 | Legacy memory-only backend using `InMemorySaver` |
 | [streamlit_frontend_streaming.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/streamlit_frontend_streaming.py) 🖥️ | Legacy memory-only streaming frontend |
 | [streamlit_frontend.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/streamlit_frontend.py) 🖥️ | Legacy memory-only static (non-streaming) frontend |
+| [langgraph_tool_backend.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/langgraph_tool_backend.py) 🔧 | Tool-enabled backend with `search_tool`, `calculator`, and `get_stock_price` tools |
+| [langgraph_mcp_backend.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/langgraph_mcp_backend.py) 🌐 | **MCP-integrated backend** — Multi-Server MCP Client with async support and external MCP tools |
+| [streamlit_frontend_mcp.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/streamlit_frontend_mcp.py) 🔌 | **MCP frontend** — Async UI for MCP-enabled chatbot with real-time MCP tool streaming |
+| [streamlit_frontend_threading.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/streamlit_frontend_threading.py) ⚙️ | Threading-based frontend for concurrent task handling |
 | [view_checkpoints.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/view_checkpoints.py) 🛠️ | Developer utility — dumps all thread checkpoints and message histories from `chatbot.db` |
 | [main.py](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/main.py) 📌 | Basic entry point placeholder |
 | [requirements.txt](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/requirements.txt) 📦 | Pip dependency list |
 | [pyproject.toml](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/pyproject.toml) ⚙️ | Project metadata and uv/pip dependency specification |
 | [.env](file:///e:/Projects/Project1Demo/Langgraph-ChatBot/.env) 🔑 | Environment variables (API keys) — **not tracked in git** |
 
+### 🔗 Frontend-Backend Mappings
+
+This project provides multiple frontend-backend combinations optimized for different use cases:
+
+| Frontend | Backend | Features | Persistence | Status |
+|---|---|---|---|---|
+| **[streamlit_frontend_database.py](streamlit_frontend_database.py)** | **[langgraph_database_backend.py](langgraph_database_backend.py)** | Multi-thread, streaming, tools (search, calculator, stock price) | ✅ SQLite | ⭐ **Recommended** |
+| **[streamlit_frontend_streaming.py](streamlit_frontend_streaming.py)** | **[langgraph_backend.py](langgraph_backend.py)** | Streaming, basic conversation | ❌ Memory-only | Legacy |
+| **[streamlit_frontend.py](streamlit_frontend.py)** | **[langgraph_backend.py](langgraph_backend.py)** | Basic conversation (no streaming) | ❌ Memory-only | Legacy |
+| **[streamlit_frontend_threading.py](streamlit_frontend_threading.py)** | **[langgraph_backend.py](langgraph_backend.py)** | Threading, concurrent operations | ❌ Memory-only | Legacy |
+| **[streamlit_frontend_mcp.py](streamlit_frontend_mcp.py)** | **[langgraph_mcp_backend.py](langgraph_mcp_backend.py)** | MCP tools, async, streaming, tools (search, stock price, MCP tools) | ✅ SQLite (async) | **MCP-Enabled** |
+
 ---
 
 ## 🔀 Three Frontend Modes Explained
 
-This project ships with three frontend implementations, each demonstrating a different level of capability:
+This project ships with multiple frontend implementations, each demonstrating a different level of capability:
 
 ```mermaid
 flowchart TD

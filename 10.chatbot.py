@@ -1,15 +1,17 @@
+from langgraph_database_backend import chatbot, retrieve_all_threads
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
-from langchain_core.messages import BaseMessage, SystemMessage
+from langchain_core.messages import BaseMessage , HumanMessage
 from langgraph.graph import StateGraph, START, END
 from typing import Annotated, TypedDict
+from pydantic import BaseModel, Field
 from langgraph.graph.message import add_messages
 from dotenv import load_dotenv
 import sqlite3 
 from langgraph.checkpoint.sqlite import SqliteSaver
-import os   
+import os
 import requests
 
 # Load environment variables from .env file
@@ -20,31 +22,6 @@ os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 # Initialize the Groq Chat LLM with streaming mode enabled
 llm_model = ChatGroq(model="llama-3.3-70b-versatile", streaming=True)
-
-# System Instruction for Professional Formatting
-SYSTEM_INSTRUCTION = """You are a professional and helpful assistant. When providing responses, follow these formatting guidelines:
-
-📋 **Formatting Guidelines:**
-• Use professional and relevant emojis (✅, ⚠️, 📊, 🔍, 💡, ✨, etc.) to enhance readability in point explanation or where you think require as well.
-• Use **bullet points (•)** to list related items or features
-• Use **numbered lists (1, 2, 3...)** for sequential steps, priorities, or procedures
-• Use **bold text** for important terms and key concepts
-• Keep responses organized and easy to scan
-• Use proper spacing between sections for clarity
-
-📝 **Examples:**
-✅ For information lists: Use bullet points
-🎯 For step-by-step instructions: Use numbered lists
-💡 For key insights: Use emojis to highlight important points
-📊 For comparisons: Use tables or structured formatting
-
-⚠️ **IMPORTANT - Tool Usage:**
-• When you need to use tools (search, calculator, stock price, etc.), use them silently WITHOUT showing the tool invocation details
-• NEVER display tool function calls or code in your response
-• Only provide the final answer/result from the tool
-• Make the tool usage completely transparent to the user
-
-Always maintain a professional tone while making responses engaging and visually appealing."""
 
 #Tools
 # 
@@ -80,20 +57,7 @@ def calculator(first_num:float,second_num:float,operation:str) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
-
-
-@tool
-def get_stock_price(symbol: str) -> dict:
-    """
-    This tool Fetch the current stock price for a given stock symbol using a financial API symbol example like this symbols ( 'AAPL, 'TSLA')
-
-    """
-    url =f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey=O9VZD9TX8Q6CNXJ5"
-    r= requests.get(url)
-    return r.json()
-
-    # -----------------
-tools = [search_tool, calculator, get_stock_price]
+tools = [search_tool, calculator]
 
 llm_with_tools = llm_model.bind_tools(tools)
 
@@ -105,9 +69,7 @@ class ChatState(TypedDict):
 def chat_node(state:ChatState):
     """ LLM node that may answer or request a tool call. """
     messages = state['messages']
-    # Prepend system instruction to guide LLM formatting
-    messages_with_system = [SystemMessage(content=SYSTEM_INSTRUCTION)] + messages
-    response = llm_with_tools.invoke(messages_with_system)
+    response = llm_with_tools.invoke(messages)
     return {"messages": [response]}
 
 tool_node = ToolNode(tools)
@@ -129,10 +91,6 @@ graph.add_edge("tools","chat_node")
 
 chatbot = graph.compile(checkpointer=checkpointer)
 
-# Helper Function to retrieve all unique thread IDs from the checkpointer
-def retrieve_all_threads():
-    all_threads = set()
-    for checkpoint in  checkpointer.list(None):
-        all_threads.add(checkpoint.config['configurable']['thread_id'])
+result = chatbot.invoke({"messages":[HumanMessage(content="Find the modulous of 12345 and 23 and give answer like a cricket commentator")]})
 
-    return list(all_threads)
+print(result['messages'][-1].content)
