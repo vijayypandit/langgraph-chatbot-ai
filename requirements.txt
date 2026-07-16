@@ -12,4 +12,5 @@ langchain-huggingface
 python-dotenv
 ipykernel
 streamlit
-
+faiss-cpu
+pypdf
