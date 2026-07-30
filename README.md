@@ -15,6 +15,42 @@
 
 ---
 
+## 🧭 Project Structure & Frontend-Backend Mapping
+
+This repository contains several versions of the same chatbot idea. In each version, the pattern is:
+
+- the Streamlit frontend handles the user interface and sends messages to the backend,
+- the backend defines the LangGraph graph, tool usage, and state handling,
+- and the selected variant adds extra capabilities like streaming, persistence, MCP, RAG, or human-in-the-loop approval.
+
+| File | Used By | Purpose |
+|---|---|---|
+| [1.streamlit_frontend.py](1.streamlit_frontend.py) | Basic UI | Simple Streamlit chatbot with an in-memory backend |
+| [2.langgraph_backend.py](2.langgraph_backend.py) | Basic backend | Minimal LangGraph graph with no persistence |
+| [3.streamlit_frontend_streaming.py](3.streamlit_frontend_streaming.py) | Streaming UI | Streamlit frontend that displays tokens as they arrive |
+| [6.streamlit_frontend_database.py](6.streamlit_frontend_database.py) | Database UI | Streamlit frontend with thread switching and chat history |
+| [7.langgraph_database_backend.py](7.langgraph_database_backend.py) | Database backend | LangGraph backend using SQLite persistence |
+| [14.streamlit_frontend_mcp.py](14.streamlit_frontend_mcp.py) | MCP UI | Streamlit frontend for MCP-enabled tool execution |
+| [13.langgraph_mcp_backend.py](13.langgraph_mcp_backend.py) | MCP backend | Backend that connects to external MCP tools |
+| [17.streamlit_rag_frontend.py](17.streamlit_rag_frontend.py) | RAG UI | Streamlit frontend for retrieval-augmented generation |
+| [16.langraph_rag_backend.py](16.langraph_rag_backend.py) | RAG backend | Backend using retrieval and generation flow |
+| [18.chatbot_human_in_the_loop.py](18.chatbot_human_in_the_loop.py) | HITL example | Standalone example showing approval-based human control |
+
+## 🤝 Human-in-the-Loop (HITL)
+
+Human-in-the-loop means the AI pauses and asks a human for approval before taking a sensitive action. This is especially useful for tasks such as purchases, sending messages, changing settings, or triggering external workflows.
+
+The example in [18.chatbot_human_in_the_loop.py](18.chatbot_human_in_the_loop.py) demonstrates this pattern:
+
+- the `purchase_stock` tool calls `interrupt(...)`,
+- the graph pauses and presents a confirmation prompt,
+- the human responds with a decision such as `yes` or `no`,
+- and the graph resumes using `Command(resume=decision)`.
+
+This gives the user control over risky or important actions instead of letting the model act fully on its own.
+
+---
+
 ## 🛠️ Tool Calling Support
 
 The chatbot supports external tools through LangGraph's tool-calling flow. The available tools vary depending on which backend is used.
