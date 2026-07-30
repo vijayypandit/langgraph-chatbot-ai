@@ -30,11 +30,11 @@ def get_stock_price(symbol: str) -> dict:
     This tool Fetch the current stock price for a given stock symbol using a financial API symbol example like this symbols ( 'AAPL, 'TSLA')
 
     """
-    url =f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={API_KEY_ALPHA}"
+    url =f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey=O9VZD9TX8Q6CNXJ5"
     r= requests.get(url)
     return r.json()
 
-#
+#Tool to purchae the stock ,but its dummy tool fr simulation...........
 @tool
 def purchase_stock(symbol: str, quantity: int) -> dict:
     """
@@ -74,10 +74,12 @@ def chat_node(state:ChatState):
     response = llm_with_tools.invoke(messages)
     return {"messages":[response]}
 
+#Create Tool Node
 tool_node = ToolNode(tools)
 
 memory = MemorySaver()
 
+#Create graph nodes, Edges
 graph=StateGraph(ChatState)
 
 graph.add_node("chat_node",chat_node)
@@ -88,6 +90,8 @@ graph.add_conditional_edges("chat_node",tools_condition)
 graph.add_edge("tools","chat_node")
 
 chatbot= graph.compile(checkpointer=memory)
+
+
 if __name__ == "__main__":
 
     thread_id="demo-thread"
