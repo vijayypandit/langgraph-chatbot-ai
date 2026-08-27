@@ -14,3 +14,4 @@ ipykernel
 streamlit
 faiss-cpu
 pypdf
+langgraph-checkpoint-postgres
