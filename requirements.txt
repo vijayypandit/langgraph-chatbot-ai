@@ -15,3 +15,4 @@ streamlit
 faiss-cpu
 pypdf
 langgraph-checkpoint-postgres
+operator
