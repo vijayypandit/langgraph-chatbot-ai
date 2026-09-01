@@ -1,25 +1,218 @@
 # Short-Term Memory (STM) in LangGraph ChatBot
 
-## 📑 Table of Contents
+## 📑 Quick Navigation
 
-1. [Overview](#overview)
-2. [Architecture Overview](#architecture-overview)
-   - [Core Components](#core-components)
-   - [System Architecture Flow](#system-architecture-flow)
-   - [Thread & Configuration Model](#thread--configuration-model)
-3. [Implementation Approaches](#implementation-approaches)
-   - [1️⃣ Basic In-Memory STM](#1️⃣-basic-in-memory-stm)
-   - [2️⃣ Persistent STM with PostgreSQL](#2️⃣-persistent-stm-with-postgresql)
-   - [3️⃣ Token-Limited STM](#3️⃣-token-limited-stm)
-   - [4️⃣ Summarization-Based STM](#4️⃣-summarization-based-stm)
-4. [STM vs LTM — Comparison Matrix](#stm-vs-ltm--comparison-matrix)
-5. [Quick Start Guide](#quick-start-guide)
-6. [Implementation Details](#implementation-details)
-7. [Key Takeaways](#key-takeaways)
-8. [Learning Path](#learning-path)
-9. [Troubleshooting](#troubleshooting)
-10. [Related Documentation](#related-documentation)
-11. [Checklist for Your Own Implementation](#checklist-for-your-own-implementation)
+| Section | Purpose |
+|---------|---------|
+| [⚡ What is STM?](#overview) | Understand STM concepts |
+| [🏗️ Architecture](#architecture-overview) | System design overview |
+| [📋 Implementations](#implementation-approaches) | Four STM approaches |
+| [🛠️ Quick Start](#quick-start-guide) | Get started in 5 minutes |
+| [🔧 Troubleshooting](#troubleshooting) | Common issues & solutions |
+
+---
+
+## 📊 Overview
+
+**Short-Term Memory (STM)** is the chatbot's conversation history within a single chat thread. It enables multi-turn dialogue by maintaining full message context.
+
+| Aspect | STM | LTM |
+|--------|-----|-----|
+| **Scope** | Single conversation | All conversations |
+| **Storage** | Message list (MessagesState) | Key-value store |
+| **Persistence** | Via checkpointer | Always persistent |
+| **Primary Use** | Conversation context | User facts & preferences |
+
+---
+
+## 🎯 Why STM Matters
+
+- ✨ Enable multi-turn conversations with full context
+- ✨ Manage token limits efficiently (trimming/summarization)
+- ✨ Persist conversations across restarts (optional)
+- ✨ Support multiple independent chat threads
+
+---
+
+## 🏗️ Architecture Overview
+
+### Core Components
+
+| Component | Purpose |
+|-----------|---------|
+| **MessagesState** | Stores all conversation messages as a list |
+| **StateGraph** | LangGraph engine that orchestrates message flow |
+| **Checkpointer** | Persists state (InMemory or PostgreSQL) |
+| **Thread ID** | Unique identifier for conversation isolation |
+
+### System Flow
+
+```
+User Input
+    ↓
+[LangGraph State Graph]
+    ├─ Load message history (via Checkpointer)
+    ├─ Invoke LLM with full context
+    └─ Append AI response to state
+    ↓
+[Save to Checkpointer]
+    ↓
+Next Invocation (same thread_id)
+    ├─ Retrieve previous messages
+    └─ Continue conversation
+```
+
+---
+
+## 📋 Implementation Approaches
+
+### 1️⃣ Basic In-Memory STM
+
+**File**: [`_stm.ipynb`](_stm.ipynb)
+
+**Key Features**: 📝
+- RAM-based storage with thread isolation
+- Complete message history per thread
+- Data cleared on app restart
+
+**Use When**: Learning basics, testing locally
+
+---
+
+### 2️⃣ Persistent STM with PostgreSQL
+
+**File**: [`_stm_persistance.ipynb`](_stm_persistance.ipynb)
+
+**Key Features**: 💾
+- Database-backed state persistence
+- Multi-user conversation isolation
+- Indefinite conversation recovery
+
+**Use When**: Production deployments, multi-user scenarios
+
+---
+
+### 3️⃣ Token-Limited STM (Trimming)
+
+**File**: [`_stm_trimming.ipynb`](_stm_trimming.ipynb)
+
+**Key Features**: 🧹
+- Implements `trim_messages()` strategy
+- Token counting via `count_tokens_approximately()`
+- Configurable max token threshold
+- Strategies: `"last"` (recommended), `"first"`, `"sliding_window"`
+
+**Why Trim?**: Reduce API costs, stay within token limits, improve focus
+
+**Use When**: Long conversations, cost optimization needed
+
+---
+
+### 4️⃣ Summarization-Based STM
+
+**File**: [`_stm_summarization.ipynb`](_stm_summarization.ipynb)
+
+**Key Features**: 📚
+- Compress old messages into AI-generated summaries
+- Keep recent messages in full
+- Preserves context while reducing tokens
+
+**Use When**: Advanced long-conversation handling, maximum context preservation
+
+---
+
+## ⚖️ STM vs LTM Comparison
+
+| Feature | STM | LTM |
+|---------|-----|-----|
+| **Storage** | Message array | Key-value store |
+| **Lifespan** | Single thread | Across all conversations |
+| **Retrieval** | Automatic (full history) | Manual queries |
+| **Persistence** | Optional | Always persistent |
+| **Use Case** | Conversation flow | User facts & knowledge |
+
+**Recommended Hybrid Approach**:
+- Use **STM** for conversation context
+- Use **LTM** for persistent user preferences
+- See [LTM documentation](./LTM_README.md) for cross-conversation knowledge
+
+---
+
+## ⚡ Quick Start Guide
+
+### 📋 Prerequisites
+- 🐍 Python 3.9+
+- 📦 LangGraph, LangChain libraries
+- 🔑 API key (Groq, Google, OpenAI, etc.)
+- 📂 PostgreSQL (optional, for persistence)
+
+### 🚀 Getting Started
+
+1. 📖 Open [`_stm.ipynb`](_stm.ipynb)
+2. ▶️ Run cells in order (basic STM)
+3. 🧪 Test multi-turn with same `thread_id`
+4. 🔄 Try different checkpointers (InMemory → PostgreSQL)
+5. 🧹 Add trimming for long conversations
+
+---
+
+## 🎯 Core Concepts
+
+### MessagesState
+Stores messages as `{role, content}` pairs. LangGraph's `add_messages` reducer automatically manages deduplication and ordering.
+
+### Thread ID
+Unique identifier for conversation isolation. Each thread maintains independent STM.
+
+### Checkpointer
+Persistence layer:
+- **InMemorySaver**: Fast, ephemeral (good for development)
+- **PostgresSaver**: Durable, shareable (good for production)
+
+---
+
+## 🔧 Troubleshooting
+
+### ❓ Memory not retained?
+**✅ Solution**: Use same `thread_id` across invocations. Verify checkpointer is configured correctly.
+
+### ❓ Database connection fails?
+**✅ Solution**: Verify PostgreSQL is running on port 5432 and connection string is correct.
+
+### ❓ Token limit errors?
+**✅ Solution**: Enable trimming with `trim_messages()` or use summarization strategy.
+
+### ❓ Messages growing indefinitely?
+**✅ Solution**: Implement trimming strategy ("`last`" keeps recent messages, "`first`" keeps old ones).
+
+---
+
+## 📚 Learning Path
+
+1. 🌟 **Start Here**: [`_stm.ipynb`](_stm.ipynb) — Basic STM concept
+2. 📈 **Next**: [`_stm_trimming.ipynb`](_stm_trimming.ipynb) — Token management
+3. 🚀 **Advanced**: [`_stm_persistance.ipynb`](_stm_persistance.ipynb) — Database persistence
+4. ⭐ **Expert**: [`_stm_summarization.ipynb`](_stm_summarization.ipynb) — Sophisticated strategies
+
+---
+
+## ✅ Quick Checklist
+
+- [ ] 📦 Install LangGraph and dependencies
+- [ ] 🔑 Set up `.env` with API keys
+- [ ] 📊 Create MessagesState graph
+- [ ] 💾 Add checkpointer (InMemory or PostgreSQL)
+- [ ] 🧠 Implement LLM node function
+- [ ] 🧪 Test with same thread_id across invocations
+- [ ] ✓ Verify message history retained
+- [ ] 🧹 (Optional) Add trimming for long conversations
+- [ ] 🎨 (Optional) Implement summarization strategy
+
+---
+
+### 🌈 **Your Chatbot Now Has Memory! 🧠✨**
+
+Happy building! 🚀
 
 ---
 

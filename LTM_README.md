@@ -4,12 +4,12 @@
 
 | Section | Purpose |
 |---------|---------|
-| [What is LTM?](#what-is-ltm) | Understand LTM concepts |
-| [Basic Methods Reference](#basic-methods-reference) | Core operations at a glance |
-| [Namespaces](#namespace-system) | How to organize data |
-| [Implementation Files](#implementation-files) | Three-step learning path |
-| [Quick Start](#quick-start-guide) | Get started in 5 minutes |
-| [Troubleshooting](#troubleshooting) | Common issues & solutions |
+| [🧠 What is LTM?](#what-is-ltm) | Understand LTM concepts |
+| [🛠️ Basic Methods Reference](#basic-methods-reference) | Core operations at a glance |
+| [📁 Namespaces](#namespace-system) | How to organize data |
+| [🚀 Implementation Files](#implementation-files) | Three-step learning path |
+| [⚡ Quick Start](#quick-start-guide) | Get started in 5 minutes |
+| [🔧 Troubleshooting](#troubleshooting) | Common issues & solutions |
 
 ---
 
@@ -38,11 +38,11 @@ Essential LTM operations you'll use most:
 
 | Method | Purpose | Syntax | File Reference |
 |--------|---------|--------|-----------------|
-| **PUT** | Store data in namespace | `store.put(namespace, key, value)` | [`_ltm_basics.ipynb`](_ltm_basics.ipynb) |
-| **GET** | Retrieve specific value by key | `store.get(namespace, key)` | [`_ltm_basics.ipynb`](_ltm_basics.ipynb) |
-| **SEARCH** | Find all items in namespace (or semantically) | `store.search(namespace, query="text", limit=5)` | [`_ltm_basics.ipynb`](_ltm_basics.ipynb) |
-| **UPDATE** | Modify existing value | `store.put(namespace, key, new_value)` | [`_ltm_implementation.ipynb`](_ltm_implementation.ipynb) |
-| **DELETE** | Remove data | `store.delete(namespace, key)` | N/A |
+| **➕ PUT** | Store data in namespace | `store.put(namespace, key, value)` | [`_ltm_basics.ipynb`](_ltm_basics.ipynb) |
+| **🔍 GET** | Retrieve specific value by key | `store.get(namespace, key)` | [`_ltm_basics.ipynb`](_ltm_basics.ipynb) |
+| **🔎 SEARCH** | Find all items in namespace (or semantically) | `store.search(namespace, query="text", limit=5)` | [`_ltm_basics.ipynb`](_ltm_basics.ipynb) |
+| **✏️ UPDATE** | Modify existing value | `store.put(namespace, key, new_value)` | [`_ltm_implementation.ipynb`](_ltm_implementation.ipynb) |
+| **🗑️ DELETE** | Remove data | `store.delete(namespace, key)` | N/A |
 
 ### Common Use Cases & Methods
 
@@ -120,23 +120,23 @@ A **namespace** is a hierarchical tuple that groups related data together. Think
 
 **Examples**:
 ```python
-# User profiles
+# 👤 User profiles
 ("user", "u1", "details")          # User u1's info
 ("user", "u1", "preferences")      # User u1's preferences
 
-# Domain knowledge  
+# 📚 Domain knowledge  
 ("domain", "python", "concepts")   # Python learning materials
 ("domain", "langraph", "examples") # LangGraph code examples
 
-# Conversations
+# 💬 Conversations
 ("conversation", "u1", "project_x") # Discussion about project X
 ```
 
 **Best Practices**:
-- ✅ Keep namespaces 3-4 levels deep
-- ✅ Use consistent naming conventions
-- ✅ Separate frequently-queried data into different namespaces
-- ✅ Use meaningful names reflecting data type
+- 🎯 Keep namespaces 3-4 levels deep
+- 🎯 Use consistent naming conventions
+- 🎯 Separate frequently-queried data into different namespaces
+- 🎯 Use meaningful names reflecting data type
 
 📁 See: [`_ltm_implementation.ipynb`](_ltm_implementation.ipynb) for namespace usage in chat nodes
 
@@ -285,9 +285,9 @@ Step 3: IMPROVED IMPLEMENTATION (Without Duplicates)
 ## ⚡ Quick Start Guide
 
 ### 📋 Prerequisites
-- Python 3.9+
-- LangGraph library
-- Embedding model API key (Google Gemini or OpenAI)
+- 🐍 Python 3.9+
+- 📦 LangGraph library
+- 🔑 Embedding model API key (Google Gemini or OpenAI)
 
 ### Setup Steps
 
@@ -389,37 +389,37 @@ Level 1: Basic Store Operations
 ## ✅ Checklist for LTM Implementation
 
 **Foundation Level** (from `_ltm_basics.ipynb`):
-- [ ] Install required dependencies (langraph, langchain, embeddings model)
-- [ ] Set up API keys in `.env` file
-- [ ] Initialize InMemoryStore with embeddings
-- [ ] Design namespace hierarchy
-- [ ] Implement PUT operations for sample data
-- [ ] Test GET operations
-- [ ] Verify namespace isolation
-- [ ] Implement semantic search
+- [ ] 📦 Install required dependencies (langraph, langchain, embeddings model)
+- [ ] 🔑 Set up API keys in `.env` file
+- [ ] 💾 Initialize InMemoryStore with embeddings
+- [ ] 📂 Design namespace hierarchy
+- [ ] ➕ Implement PUT operations for sample data
+- [ ] 🔍 Test GET operations
+- [ ] ✓ Verify namespace isolation
+- [ ] 🔎 Implement semantic search
 
 **Memory Extraction Level** (from `_ltm_implementation.ipynb`):
-- [ ] Integrate LTM store with LangGraph
-- [ ] Build chat node that accesses memory store
-- [ ] Implement automatic memory extraction from user messages
-- [ ] Create personalized system prompt with retrieved memories
-- [ ] Test end-to-end chat with memory context
+- [ ] 🔗 Integrate LTM store with LangGraph
+- [ ] 🧩 Build chat node that accesses memory store
+- [ ] 🧠 Implement automatic memory extraction from user messages
+- [ ] 🎨 Create personalized system prompt with retrieved memories
+- [ ] ✔️ Test end-to-end chat with memory context
 
 **De-duplication Level** (from `_ltm_no_deupliicate_mem.ipynb`):
-- [ ] Create Pydantic models for MemoryItem and MemoryDecision
-- [ ] Build memory extractor with structured output
-- [ ] Implement duplicate detection logic
-- [ ] Filter memories by `is_new` flag
-- [ ] Store only genuinely new information
-- [ ] Test de-duplication with repeated messages
-- [ ] Verify memory store contains no redundant entries
+- [ ] 🏗️ Create Pydantic models for MemoryItem and MemoryDecision
+- [ ] 🤖 Build memory extractor with structured output
+- [ ] 🔄 Implement duplicate detection logic
+- [ ] 🧹 Filter memories by `is_new` flag
+- [ ] 💎 Store only genuinely new information
+- [ ] 📊 Test de-duplication with repeated messages
+- [ ] 🔐 Verify memory store contains no redundant entries
 
 **Production Ready**:
-- [ ] Plan database-backed persistence for reliability
-- [ ] Design user-specific memory management
-- [ ] Implement memory aging/cleanup policies
-- [ ] Test cross-conversation memory consistency
-- [ ] Monitor memory growth and storage efficiency
+- [ ] 📦 Plan database-backed persistence for reliability
+- [ ] 👤 Design user-specific memory management
+- [ ] 🧹 Implement memory aging/cleanup policies
+- [ ] 🔗 Test cross-conversation memory consistency
+- [ ] 📈 Monitor memory growth and storage efficiency
 
 ---
 
